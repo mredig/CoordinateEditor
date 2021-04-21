@@ -1,23 +1,32 @@
 import MapKit
 
-class CoordinateEditor: UIView {
-	var startCoordinates: CLLocationCoordinate2D? {
+public class CoordinateEditor: UIView {
+	public var startCoordinates: CLLocationCoordinate2D? {
 		didSet { updateAnnotations() }
 	}
-	var selectedCoordinates: CLLocationCoordinate2D? {
+	public var selectedCoordinates: CLLocationCoordinate2D? {
 		didSet { updateAnnotations() }
 	}
 
 	private let mapView = MKMapView()
 
-	override init(frame: CGRect) {
-		super.init(frame: frame)
+	public enum CoordinateSelectionMode {
+		case startCoordinate
+		case selectedCoordinate
+	}
+
+	public typealias AnnotationGenerator = (CoordinateSelectionMode, CLLocationCoordinate2D) -> MKAnnotation
+	public var annotationGenerator: AnnotationGenerator
+
+
+	public init(annotationGenerator: @escaping AnnotationGenerator = { _, coordinates in MKPlacemark(coordinate: coordinates) }) {
+		self.annotationGenerator = annotationGenerator
+		super.init(frame: .zero)
 		commonInit()
 	}
 
-	required init?(coder: NSCoder) {
-		super.init(coder: coder)
-		commonInit()
+	public required init?(coder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
 	}
 
 	private func commonInit() {
@@ -33,18 +42,18 @@ class CoordinateEditor: UIView {
 		mapView.removeAnnotations(mapView.annotations)
 
 		if let startCoordinates = startCoordinates {
-			let start = MKPlacemark(coordinate: startCoordinates)
+			let start = annotationGenerator(.startCoordinate, startCoordinates)
 
 			mapView.addAnnotation(start)
 		}
 
 		if let selectedCoordinates = selectedCoordinates {
-			let selected = MKPlacemark(coordinate: selectedCoordinates)
+			let selected = annotationGenerator(.selectedCoordinate, selectedCoordinates)
 
 			mapView.addAnnotation(selected)
 		}
 
-		let regionCenter = startCoordinates ?? selectedCoordinates ?? CLLocationCoordinate2D(latitude: 40.759551, longitude: -111.888196)
+		let regionCenter = selectedCoordinates ?? startCoordinates ??  CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324)
 
 		let span = selectedCoordinates == nil ? MKCoordinateSpan(latitudeDelta: 25, longitudeDelta: 30) : mapView.region.span
 		let region = MKCoordinateRegion(center: regionCenter, span: span)
@@ -82,7 +91,7 @@ struct MapPreviews: PreviewProvider {
 
 	static var previews: some View {
 		CoordinateEditorPreview(
-			startCoord: nil,
+			startCoord: CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324),
 			selectedCoord: nil)
 	}
 
