@@ -8,6 +8,11 @@ public class CoordinateEditor: UIView {
 		didSet { updateAnnotations() }
 	}
 
+	public var region: MKCoordinateRegion {
+		get { mapView.region }
+		set { mapView.region = newValue }
+	}
+
 	private let mapView = MKMapView()
 
 	public enum CoordinateSelectionMode {
@@ -68,6 +73,11 @@ public class CoordinateEditor: UIView {
 
 		selectedCoordinates = coordinate
 	}
+
+	public func setRegion(_ region: MKCoordinateRegion, animated: Bool = true) {
+		mapView.setRegion(region, animated: animated)
+	}
+
 }
 
 #if DEBUG
