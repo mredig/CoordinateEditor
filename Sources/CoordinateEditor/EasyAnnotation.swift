@@ -20,6 +20,16 @@ extension CoordinateEditor {
 	}
 }
 
-extension MKPinAnnotationView {
-	static let reuseIdentifier = "\(MKPinAnnotationView.self)-cellID"
+
+protocol ReuseIdentifiable {
+	static var reuseIdentifier: String { get }
 }
+
+extension ReuseIdentifiable {
+	static var reuseIdentifier: String { "\(Self.self)-cellID" }
+}
+
+
+extension MKPinAnnotationView: ReuseIdentifiable {}
+
+extension MKMarkerAnnotationView: ReuseIdentifiable {}

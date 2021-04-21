@@ -55,7 +55,7 @@ public class CoordinateEditor: UIView {
 		let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(longPressMap))
 		mapView.addGestureRecognizer(longPressGesture)
 
-		register(MKPinAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKPinAnnotationView.reuseIdentifier)
+		register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMarkerAnnotationView.reuseIdentifier)
 		mapView.delegate = mapDelegate
 	}
 
@@ -139,22 +139,20 @@ extension CoordinateEditor {
 
 		init(provider: AnnotationProvider? = nil) {
 			self.provider = provider ?? { mapView, annotation in
-				let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKPinAnnotationView.reuseIdentifier, for: annotation)
+				let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMarkerAnnotationView.reuseIdentifier, for: annotation)
 
 				annotationView.annotation = annotation
 				annotationView.canShowCallout = true
 
-				guard let annotation = annotation as? EasyAnnotation else { return annotationView }
-
-				if let pinView = annotationView as? MKPinAnnotationView {
+				if let pinView = annotationView as? MKMarkerAnnotationView {
 					switch annotation.mode {
 					case .selectedCoordinate:
-						pinView.pinTintColor = MKPinAnnotationView.greenPinColor()
-						pinView.animatesDrop = true
+						pinView.markerTintColor = MKPinAnnotationView.greenPinColor()
+						pinView.animatesWhenAdded = true
 						pinView.alpha = 1
 					case .startCoordinate:
-						pinView.pinTintColor = MKPinAnnotationView.redPinColor()
-						pinView.animatesDrop = false
+						pinView.markerTintColor = MKPinAnnotationView.redPinColor()
+						pinView.animatesWhenAdded = false
 						pinView.alpha = 0.5
 					}
 				}
