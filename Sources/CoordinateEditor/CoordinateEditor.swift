@@ -58,7 +58,7 @@ public class CoordinateEditor: UIView {
 			mapView.addAnnotation(selected)
 		}
 
-		let regionCenter = selectedCoordinates ?? startCoordinates ??  CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324)
+		let regionCenter = selectedCoordinates ?? startCoordinates ?? CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324)
 
 		let span = selectedCoordinates == nil ? MKCoordinateSpan(latitudeDelta: 25, longitudeDelta: 30) : mapView.region.span
 		let region = MKCoordinateRegion(center: regionCenter, span: span)
@@ -74,20 +74,14 @@ public class CoordinateEditor: UIView {
 		selectedCoordinates = coordinate
 	}
 
-	public enum Action {
-		case nothing
-		case centerMap
-		case centerMapAndSelectLocation
-	}
-	public typealias SearchResultCompletionSuccess = (coordinates: CLLocationCoordinate2D, actionBlock: (Action) -> Void)
-	public typealias SearchResultCompletion = (Result<SearchResultCompletionSuccess, Error>) -> Void
+	public typealias SearchResultCompletion = (Result<MKLocalSearch.Response, Error>) -> Void
 	public func performNaturalLanguageSearch(for query: String, completion: @escaping SearchResultCompletion) {
 
 		let request = MKLocalSearch.Request()
 		request.naturalLanguageQuery = query
 		let search = MKLocalSearch(request: request)
 		search.start { response, error in
-			let result: Result<SearchResultCompletionSuccess, Error>
+			let result: Result<MKLocalSearch.Response, Error>
 			defer {
 				DispatchQueue.main.async {
 					completion(result)
@@ -104,19 +98,7 @@ public class CoordinateEditor: UIView {
 				return
 			}
 
-			let coordinate = response.boundingRegion.center
-			let actionBlock = { [weak self] (action: Action) in
-				switch action {
-				case .nothing:
-					break
-				case .centerMap:
-					self?.setRegion(response.boundingRegion, animated: true)
-				case .centerMapAndSelectLocation:
-					self?.selectedCoordinates = coordinate
-					self?.setRegion(response.boundingRegion, animated: true)
-				}
-			}
-			result = .success((coordinate, actionBlock))
+			result = .success(response)
 		}
 	}
 
@@ -151,10 +133,11 @@ struct MapPreviews: PreviewProvider {
 			uiView.selectedCoordinates = selectedCoord
 
 			if let query = searchQuery {
-				uiView.performNaturalLanguageSearch(for: query) { result in
+				uiView.performNaturalLanguageSearch(for: query) { [weak uiView] result in
 					do {
-						let success = try result.get()
-						success.actionBlock(.centerMapAndSelectLocation)
+						let response = try result.get()
+						uiView?.selectedCoordinates = response.mapItems.first?.placemark.coordinate
+						uiView?.setRegion(response.boundingRegion)
 					} catch {
 						print("Error searching map: \(error)")
 					}
@@ -162,7 +145,6 @@ struct MapPreviews: PreviewProvider {
 			}
 		}
 	}
-
 
 	struct PreviewWrapper: View {
 		@State var searchQuery = ""
