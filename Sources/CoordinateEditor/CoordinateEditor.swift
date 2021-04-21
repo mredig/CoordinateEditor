@@ -44,7 +44,9 @@ class CoordinateEditor: UIView {
 			mapView.addAnnotation(selected)
 		}
 
-		mapView.showAnnotations(mapView.annotations, animated: true)
+		let regionCenter = startCoordinates ?? selectedCoordinates ?? CLLocationCoordinate2D(latitude: 40.759551, longitude: -111.888196)
+		let region = MKCoordinateRegion(center: regionCenter, span: MKCoordinateSpan(latitudeDelta: 25, longitudeDelta: 30))
+		mapView.setRegion(region, animated: true)
 	}
 
 	@objc private func longPressMap(_ sender: UILongPressGestureRecognizer) {
@@ -78,7 +80,7 @@ struct MapPreviews: PreviewProvider {
 
 	static var previews: some View {
 		CoordinateEditorPreview(
-			startCoord: CLLocationCoordinate2D(latitude: 43.844311, longitude: -92.188330),
+			startCoord: nil,
 			selectedCoord: nil)
 	}
 
