@@ -45,7 +45,9 @@ class CoordinateEditor: UIView {
 		}
 
 		let regionCenter = startCoordinates ?? selectedCoordinates ?? CLLocationCoordinate2D(latitude: 40.759551, longitude: -111.888196)
-		let region = MKCoordinateRegion(center: regionCenter, span: MKCoordinateSpan(latitudeDelta: 25, longitudeDelta: 30))
+
+		let span = selectedCoordinates == nil ? MKCoordinateSpan(latitudeDelta: 25, longitudeDelta: 30) : mapView.region.span
+		let region = MKCoordinateRegion(center: regionCenter, span: span)
 		mapView.setRegion(region, animated: true)
 	}
 
