@@ -166,12 +166,10 @@ struct MapPreviews: PreviewProvider {
 					startCoord: nil,
 					selectedCoord: nil,
 					searchQuery: searchQuery.isEmpty ? nil : searchQuery)
-
-				Text(searchQuery)
 			}
 		}
 	}
-	
+
 	static var previews: some View {
 		PreviewWrapper()
 	}
