@@ -24,8 +24,17 @@ public class CoordinateEditor: UIView {
 	public var annotationGenerator: AnnotationGenerator
 
 
-	public init(annotationGenerator: @escaping AnnotationGenerator = { _, coordinates in MKPlacemark(coordinate: coordinates) }) {
-		self.annotationGenerator = annotationGenerator
+	public init(annotationGenerator: AnnotationGenerator? = nil) {
+		self.annotationGenerator = annotationGenerator ?? { mode, coordinates in
+			let title: String
+			switch mode {
+			case .selectedCoordinate:
+				title = "Selected Location"
+			case .startCoordinate:
+				title = "Original Location"
+			}
+			return EasyAnnotation(title: title, coordinate: coordinates)
+		}
 		super.init(frame: .zero)
 		commonInit()
 	}
