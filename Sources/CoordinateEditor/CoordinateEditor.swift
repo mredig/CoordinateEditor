@@ -14,15 +14,19 @@ public class CoordinateEditor: UIView {
 	}
 
 	private let mapView = MKMapView()
+	private let mapDelegate = TheDelegate()
 
 	public enum CoordinateSelectionMode {
 		case startCoordinate
 		case selectedCoordinate
 	}
 
-	public typealias AnnotationGenerator = (CoordinateSelectionMode, CLLocationCoordinate2D) -> MKAnnotation
+	public typealias AnnotationGenerator = (CoordinateSelectionMode, CLLocationCoordinate2D) -> EditorAnnotation
 	public var annotationGenerator: AnnotationGenerator
-
+	public var annotationViewProvider: AnnotationProvider {
+		get { mapDelegate.provider }
+		set { mapDelegate.provider = newValue }
+	}
 
 	public init(annotationGenerator: AnnotationGenerator? = nil) {
 		self.annotationGenerator = annotationGenerator ?? { mode, coordinates in
@@ -52,7 +56,7 @@ public class CoordinateEditor: UIView {
 		mapView.addGestureRecognizer(longPressGesture)
 
 		register(MKPinAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKPinAnnotationView.reuseIdentifier)
-		mapView.delegate = self
+		mapView.delegate = mapDelegate
 	}
 
 	private func updateAnnotations() {
@@ -127,28 +131,42 @@ public class CoordinateEditor: UIView {
 	}
 }
 
-extension CoordinateEditor: MKMapViewDelegate {
-	public func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-		let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKPinAnnotationView.reuseIdentifier, for: annotation)
+extension CoordinateEditor {
+	public typealias AnnotationProvider = (MKMapView, EditorAnnotation) -> MKAnnotationView?
+	class TheDelegate: NSObject, MKMapViewDelegate {
 
-		annotationView.annotation = annotation
+		var provider: AnnotationProvider
 
-		guard let annotation = annotation as? EasyAnnotation else { return annotationView }
+		init(provider: AnnotationProvider? = nil) {
+			self.provider = provider ?? { mapView, annotation in
+				let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKPinAnnotationView.reuseIdentifier, for: annotation)
 
-		if let pinView = annotationView as? MKPinAnnotationView {
-			switch annotation.mode {
-			case .selectedCoordinate:
-				pinView.pinTintColor = MKPinAnnotationView.greenPinColor()
-				pinView.animatesDrop = true
-				pinView.alpha = 1
-			case .startCoordinate:
-				pinView.pinTintColor = MKPinAnnotationView.redPinColor()
-				pinView.animatesDrop = false
-				pinView.alpha = 0.5
+				annotationView.annotation = annotation
+				annotationView.canShowCallout = true
+
+				guard let annotation = annotation as? EasyAnnotation else { return annotationView }
+
+				if let pinView = annotationView as? MKPinAnnotationView {
+					switch annotation.mode {
+					case .selectedCoordinate:
+						pinView.pinTintColor = MKPinAnnotationView.greenPinColor()
+						pinView.animatesDrop = true
+						pinView.alpha = 1
+					case .startCoordinate:
+						pinView.pinTintColor = MKPinAnnotationView.redPinColor()
+						pinView.animatesDrop = false
+						pinView.alpha = 0.5
+					}
+				}
+
+				return annotationView
 			}
 		}
 
-		return annotationView
+		func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+			guard let annotation = annotation as? EditorAnnotation else { fatalError() }
+			return provider(mapView, annotation)
+		}
 	}
 }
 
