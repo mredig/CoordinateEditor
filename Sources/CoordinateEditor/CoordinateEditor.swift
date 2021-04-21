@@ -213,7 +213,7 @@ struct MapPreviews: PreviewProvider {
 				TextField("Search", text: $searchQuery)
 
 				CoordinateEditorPreview(
-					startCoord: nil,
+					startCoord: CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324),
 					selectedCoord: nil,
 					searchQuery: searchQuery.isEmpty ? nil : searchQuery)
 			}
