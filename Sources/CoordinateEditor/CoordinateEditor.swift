@@ -74,10 +74,59 @@ public class CoordinateEditor: UIView {
 		selectedCoordinates = coordinate
 	}
 
+	public enum Action {
+		case nothing
+		case centerMap
+		case centerMapAndSelectLocation
+	}
+	public typealias SearchResultCompletionSuccess = (coordinates: CLLocationCoordinate2D, actionBlock: (Action) -> Void)
+	public typealias SearchResultCompletion = (Result<SearchResultCompletionSuccess, Error>) -> Void
+	public func performNaturalLanguageSearch(for query: String, completion: @escaping SearchResultCompletion) {
+
+		let request = MKLocalSearch.Request()
+		request.naturalLanguageQuery = query
+		let search = MKLocalSearch(request: request)
+		search.start { response, error in
+			let result: Result<SearchResultCompletionSuccess, Error>
+			defer {
+				DispatchQueue.main.async {
+					completion(result)
+				}
+			}
+
+			if let error = error {
+				result = .failure(error)
+				return
+			}
+
+			guard let response = response else {
+				result = .failure(CoordinateEditorError.noResponse)
+				return
+			}
+
+			let coordinate = response.boundingRegion.center
+			let actionBlock = { [weak self] (action: Action) in
+				switch action {
+				case .nothing:
+					break
+				case .centerMap:
+					self?.setRegion(response.boundingRegion, animated: true)
+				case .centerMapAndSelectLocation:
+					self?.selectedCoordinates = coordinate
+					self?.setRegion(response.boundingRegion, animated: true)
+				}
+			}
+			result = .success((coordinate, actionBlock))
+		}
+	}
+
 	public func setRegion(_ region: MKCoordinateRegion, animated: Bool = true) {
 		mapView.setRegion(region, animated: animated)
 	}
 
+	enum CoordinateEditorError: Error {
+		case noResponse
+	}
 }
 
 #if DEBUG
@@ -89,20 +138,51 @@ struct MapPreviews: PreviewProvider {
 		@State var startCoord: CLLocationCoordinate2D?
 		@State var selectedCoord: CLLocationCoordinate2D?
 
+		let searchQuery: String?
+
 		func makeUIView(context: Context) -> CoordinateEditor {
-			CoordinateEditor()
+			let view = CoordinateEditor()
+
+			return view
 		}
 
 		func updateUIView(_ uiView: CoordinateEditor, context: Context) {
 			uiView.startCoordinates = startCoord
 			uiView.selectedCoordinates = selectedCoord
+
+			if let query = searchQuery {
+				uiView.performNaturalLanguageSearch(for: query) { result in
+					do {
+						let success = try result.get()
+						success.actionBlock(.centerMapAndSelectLocation)
+					} catch {
+						print("Error searching map: \(error)")
+					}
+				}
+			}
 		}
 	}
 
+
+	struct PreviewWrapper: View {
+		@State var searchQuery = ""
+
+		var body: some View {
+			VStack {
+				TextField("Search", text: $searchQuery)
+
+				CoordinateEditorPreview(
+					startCoord: nil,
+					selectedCoord: nil,
+					searchQuery: searchQuery.isEmpty ? nil : searchQuery)
+
+				Text(searchQuery)
+			}
+		}
+	}
+	
 	static var previews: some View {
-		CoordinateEditorPreview(
-			startCoord: CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324),
-			selectedCoord: nil)
+		PreviewWrapper()
 	}
 
 }
