@@ -24,6 +24,9 @@ class CoordinateEditor: UIView {
 		addSubview(mapView)
 
 		constrain(subview: mapView)
+
+		let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(longPressMap))
+		mapView.addGestureRecognizer(longPressGesture)
 	}
 
 	private func updateAnnotations() {
@@ -42,6 +45,15 @@ class CoordinateEditor: UIView {
 		}
 
 		mapView.showAnnotations(mapView.annotations, animated: true)
+	}
+
+	@objc private func longPressMap(_ sender: UILongPressGestureRecognizer) {
+		guard sender.state == .began else { return }
+		let deviceLocation = sender.location(in: mapView)
+
+		let coordinate = mapView.convert(deviceLocation, toCoordinateFrom: mapView)
+
+		selectedCoordinates = coordinate
 	}
 }
 
@@ -66,8 +78,8 @@ struct MapPreviews: PreviewProvider {
 
 	static var previews: some View {
 		CoordinateEditorPreview(
-			startCoord: CLLocationCoordinate2D(latitude: 45, longitude: 100),
-			selectedCoord: CLLocationCoordinate2D(latitude: 25, longitude: 40))
+			startCoord: CLLocationCoordinate2D(latitude: 43.844311, longitude: -92.188330),
+			selectedCoord: nil)
 	}
 
 }
