@@ -148,3 +148,5 @@ iOSInjectionProject/
 # End of https://www.toptal.com/developers/gitignore/api/swift,xcode,macos,linux
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .swiftpm/xcode/package.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+Demo/Demo.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+Demo/Demo.xcodeproj/project.xcworkspace/contents.xcworkspacedata
