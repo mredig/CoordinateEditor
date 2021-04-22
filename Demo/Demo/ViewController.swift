@@ -7,6 +7,7 @@
 
 import UIKit
 import CoordinateEditor
+import CoreLocation
 
 @testable import CoordinateEditor
 
@@ -34,6 +35,9 @@ class ViewController: UIViewController {
 
 		textField.addTarget(self, action: #selector(onSearchBoxReturn), for: .editingDidEnd)
 		textField.delegate = self
+
+		let coord = CLLocationCoordinate2D(latitude: 43.986561, longitude: -92.459473)
+		coordEditor.setStarter(to: coord)
 	}
 
 	@objc private func onSearchBoxReturn(_ sender: UITextField) {
@@ -45,7 +49,9 @@ class ViewController: UIViewController {
 		coordEditor.performNaturalLanguageSearch(for: search) { [weak self] result in
 			do {
 				let response = try result.get()
-				self?.coordEditor.selectedCoordinates = response.mapItems.first?.placemark.coordinate
+				guard let firstResult = response.mapItems.first?.placemark else { return }
+
+				self?.coordEditor.selectedCoordinates = CoordinateEditor.EditorAnnotation(firstResult, mode: .selectedCoordinate)
 				self?.coordEditor.setRegion(response.boundingRegion)
 			} catch {
 				print("error searching: \(error)")

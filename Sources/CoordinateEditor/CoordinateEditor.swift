@@ -1,11 +1,23 @@
 import MapKit
 
 public class CoordinateEditor: UIView {
-	public var startCoordinates: CLLocationCoordinate2D? {
-		didSet { updateAnnotations() }
+	private var _startCoordinates: EditorAnnotation?
+	public var startCoordinates: EditorAnnotation? {
+		get { _startCoordinates }
+		set {
+			newValue?.mode = .startCoordinate
+			_startCoordinates = newValue
+			updateAnnotations()
+		}
 	}
-	public var selectedCoordinates: CLLocationCoordinate2D? {
-		didSet { updateAnnotations() }
+	private var _selectedCoordinates: EditorAnnotation?
+	public var selectedCoordinates: EditorAnnotation? {
+		get { _selectedCoordinates }
+		set {
+			newValue?.mode = .selectedCoordinate
+			_selectedCoordinates = newValue
+			updateAnnotations()
+		}
 	}
 
 	public var region: MKCoordinateRegion {
@@ -37,7 +49,7 @@ public class CoordinateEditor: UIView {
 			case .startCoordinate:
 				title = "Original Location"
 			}
-			return EasyAnnotation(title: title, mode: mode, coordinate: coordinates)
+			return EditorAnnotation(title: title, mode: mode, coordinate: coordinates)
 		}
 		super.init(frame: .zero)
 		commonInit()
@@ -63,18 +75,16 @@ public class CoordinateEditor: UIView {
 		mapView.removeAnnotations(mapView.annotations)
 
 		if let startCoordinates = startCoordinates {
-			let start = annotationGenerator(.startCoordinate, startCoordinates)
-
-			mapView.addAnnotation(start)
+			mapView.addAnnotation(startCoordinates)
 		}
 
 		if let selectedCoordinates = selectedCoordinates {
-			let selected = annotationGenerator(.selectedCoordinate, selectedCoordinates)
-
-			mapView.addAnnotation(selected)
+			mapView.addAnnotation(selectedCoordinates)
 		}
 
-		let regionCenter = selectedCoordinates ?? startCoordinates ?? CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324)
+		let regionCenter = selectedCoordinates?.coordinate ??
+			startCoordinates?.coordinate ??
+			CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324)
 
 		let span = selectedCoordinates == nil ? MKCoordinateSpan(latitudeDelta: 25, longitudeDelta: 30) : mapView.region.span
 		let region = MKCoordinateRegion(center: regionCenter, span: span)
@@ -87,7 +97,14 @@ public class CoordinateEditor: UIView {
 
 		let coordinate = mapView.convert(deviceLocation, toCoordinateFrom: mapView)
 
-		selectedCoordinates = coordinate
+		EditorAnnotation.fetchName(for: coordinate, mode: .selectedCoordinate) { [weak self] result in
+			do {
+				let annotation = try result.get()
+				self?.selectedCoordinates = annotation
+			} catch {
+				print("Error fetching name for coordinate \(coordinate): \(error)")
+			}
+		}
 	}
 
 	public typealias SearchResultCompletion = (Result<MKLocalSearch.Response, Error>) -> Void
@@ -120,6 +137,12 @@ public class CoordinateEditor: UIView {
 
 	public func setRegion(_ region: MKCoordinateRegion, animated: Bool = true) {
 		mapView.setRegion(region, animated: animated)
+	}
+
+	public func setStarter(to coordinate: CLLocationCoordinate2D) {
+		EditorAnnotation.fetchName(for: coordinate, mode: .startCoordinate) { [weak self] result in
+			self?.startCoordinates = try? result.get()
+		}
 	}
 
 	public func register(_ viewClass: AnyClass, forAnnotationViewWithReuseIdentifier identifier: String) {
@@ -171,56 +194,56 @@ extension CoordinateEditor {
 #if DEBUG
 import SwiftUI
 
-struct MapPreviews: PreviewProvider {
-
-	struct CoordinateEditorPreview: UIViewRepresentable {
-		@State var startCoord: CLLocationCoordinate2D?
-		@State var selectedCoord: CLLocationCoordinate2D?
-
-		let searchQuery: String?
-
-		func makeUIView(context: Context) -> CoordinateEditor {
-			let view = CoordinateEditor()
-
-			return view
-		}
-
-		func updateUIView(_ uiView: CoordinateEditor, context: Context) {
-			uiView.startCoordinates = startCoord
-			uiView.selectedCoordinates = selectedCoord
-
-			if let query = searchQuery {
-				uiView.performNaturalLanguageSearch(for: query) { [weak uiView] result in
-					do {
-						let response = try result.get()
-						uiView?.selectedCoordinates = response.mapItems.first?.placemark.coordinate
-						uiView?.setRegion(response.boundingRegion)
-					} catch {
-						print("Error searching map: \(error)")
-					}
-				}
-			}
-		}
-	}
-
-	struct PreviewWrapper: View {
-		@State var searchQuery = ""
-
-		var body: some View {
-			VStack {
-				TextField("Search", text: $searchQuery)
-
-				CoordinateEditorPreview(
-					startCoord: CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324),
-					selectedCoord: nil,
-					searchQuery: searchQuery.isEmpty ? nil : searchQuery)
-			}
-		}
-	}
-
-	static var previews: some View {
-		PreviewWrapper()
-	}
-
-}
+//struct MapPreviews: PreviewProvider {
+//
+//	struct CoordinateEditorPreview: UIViewRepresentable {
+//		@State var startCoord: CLLocationCoordinate2D?
+//		@State var selectedCoord: CLLocationCoordinate2D?
+//
+//		let searchQuery: String?
+//
+//		func makeUIView(context: Context) -> CoordinateEditor {
+//			let view = CoordinateEditor()
+//
+//			return view
+//		}
+//
+//		func updateUIView(_ uiView: CoordinateEditor, context: Context) {
+//			uiView.startCoordinates = startCoord
+//			uiView.selectedCoordinates = selectedCoord
+//
+//			if let query = searchQuery {
+//				uiView.performNaturalLanguageSearch(for: query) { [weak uiView] result in
+//					do {
+//						let response = try result.get()
+//						uiView?.selectedCoordinates = response.mapItems.first?.placemark.coordinate
+//						uiView?.setRegion(response.boundingRegion)
+//					} catch {
+//						print("Error searching map: \(error)")
+//					}
+//				}
+//			}
+//		}
+//	}
+//
+//	struct PreviewWrapper: View {
+//		@State var searchQuery = ""
+//
+//		var body: some View {
+//			VStack {
+//				TextField("Search", text: $searchQuery)
+//
+//				CoordinateEditorPreview(
+//					startCoord: CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324),
+//					selectedCoord: nil,
+//					searchQuery: searchQuery.isEmpty ? nil : searchQuery)
+//			}
+//		}
+//	}
+//
+//	static var previews: some View {
+//		PreviewWrapper()
+//	}
+//
+//}
 #endif
