@@ -1,21 +1,21 @@
 import MapKit
 
 public class CoordinateEditor: UIView {
-	private var _startCoordinates: EditorAnnotation?
-	public var startCoordinates: EditorAnnotation? {
-		get { _startCoordinates }
+	private var _startLocationAnnotation: EditorAnnotation?
+	public var startLocationAnnotation: EditorAnnotation? {
+		get { _startLocationAnnotation }
 		set {
 			newValue?.mode = .startCoordinate
-			_startCoordinates = newValue
+			_startLocationAnnotation = newValue
 			updateAnnotations()
 		}
 	}
-	private var _selectedCoordinates: EditorAnnotation?
-	public var selectedCoordinates: EditorAnnotation? {
-		get { _selectedCoordinates }
+	private var _selectedLocationAnnotation: EditorAnnotation?
+	public var selectedLocationAnnotation: EditorAnnotation? {
+		get { _selectedLocationAnnotation }
 		set {
 			newValue?.mode = .selectedCoordinate
-			_selectedCoordinates = newValue
+			_selectedLocationAnnotation = newValue
 			updateAnnotations()
 		}
 	}
@@ -33,30 +33,19 @@ public class CoordinateEditor: UIView {
 		case selectedCoordinate
 	}
 
-	public typealias AnnotationGenerator = (CoordinateSelectionMode, CLLocationCoordinate2D) -> EditorAnnotation
-	public var annotationGenerator: AnnotationGenerator
 	public var annotationViewProvider: AnnotationProvider {
 		get { mapDelegate.provider }
 		set { mapDelegate.provider = newValue }
 	}
 
-	public init(annotationGenerator: AnnotationGenerator? = nil) {
-		self.annotationGenerator = annotationGenerator ?? { mode, coordinates in
-			let title: String
-			switch mode {
-			case .selectedCoordinate:
-				title = "Selected Location"
-			case .startCoordinate:
-				title = "Original Location"
-			}
-			return EditorAnnotation(title: title, mode: mode, coordinate: coordinates)
-		}
-		super.init(frame: .zero)
+	public override init(frame: CGRect = .zero) {
+		super.init(frame: frame)
 		commonInit()
 	}
 
 	public required init?(coder: NSCoder) {
-		fatalError("init(coder:) has not been implemented")
+		super.init(coder: coder)
+		commonInit()
 	}
 
 	private func commonInit() {
@@ -74,19 +63,19 @@ public class CoordinateEditor: UIView {
 	private func updateAnnotations() {
 		mapView.removeAnnotations(mapView.annotations)
 
-		if let startCoordinates = startCoordinates {
+		if let startCoordinates = startLocationAnnotation {
 			mapView.addAnnotation(startCoordinates)
 		}
 
-		if let selectedCoordinates = selectedCoordinates {
+		if let selectedCoordinates = selectedLocationAnnotation {
 			mapView.addAnnotation(selectedCoordinates)
 		}
 
-		let regionCenter = selectedCoordinates?.coordinate ??
-			startCoordinates?.coordinate ??
+		let regionCenter = selectedLocationAnnotation?.coordinate ??
+			startLocationAnnotation?.coordinate ??
 			CLLocationCoordinate2D(latitude: 40.768866, longitude: -111.904324)
 
-		let span = selectedCoordinates == nil ? MKCoordinateSpan(latitudeDelta: 25, longitudeDelta: 30) : mapView.region.span
+		let span = selectedLocationAnnotation == nil ? MKCoordinateSpan(latitudeDelta: 25, longitudeDelta: 30) : mapView.region.span
 		let region = MKCoordinateRegion(center: regionCenter, span: span)
 		mapView.setRegion(region, animated: true)
 	}
@@ -100,7 +89,7 @@ public class CoordinateEditor: UIView {
 		EditorAnnotation.fetchName(for: coordinate, mode: .selectedCoordinate) { [weak self] result in
 			do {
 				let annotation = try result.get()
-				self?.selectedCoordinates = annotation
+				self?.selectedLocationAnnotation = annotation
 			} catch {
 				print("Error fetching name for coordinate \(coordinate): \(error)")
 			}
@@ -109,7 +98,6 @@ public class CoordinateEditor: UIView {
 
 	public typealias SearchResultCompletion = (Result<MKLocalSearch.Response, Error>) -> Void
 	public func performNaturalLanguageSearch(for query: String, completion: @escaping SearchResultCompletion) {
-
 		let request = MKLocalSearch.Request()
 		request.naturalLanguageQuery = query
 		let search = MKLocalSearch(request: request)
@@ -141,7 +129,7 @@ public class CoordinateEditor: UIView {
 
 	public func setStarter(to coordinate: CLLocationCoordinate2D) {
 		EditorAnnotation.fetchName(for: coordinate, mode: .startCoordinate) { [weak self] result in
-			self?.startCoordinates = try? result.get()
+			self?.startLocationAnnotation = try? result.get()
 		}
 	}
 
