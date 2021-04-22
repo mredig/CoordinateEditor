@@ -1,6 +1,6 @@
 import MapKit
 
-extension CoordinateEditor {
+extension CoordinateEditorView {
 	public class EditorAnnotation: NSObject, MKAnnotation {
 		public var title: String?
 		public var subtitle: String?

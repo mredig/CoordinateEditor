@@ -1,6 +1,6 @@
 import MapKit
 
-public class CoordinateEditor: UIView {
+public class CoordinateEditorView: UIView {
 	private var _startLocationAnnotation: EditorAnnotation?
 	/**
 	Set this value if you have coordinates to start with and a title to label on the map. If you only have coordinates, refer to `setStarter(_:)`
@@ -108,7 +108,7 @@ public class CoordinateEditor: UIView {
 		}
 	}
 
-	public typealias SearchResultCompletion = (Result<MKLocalSearch.Response, Error>, CoordinateEditor) -> Void
+	public typealias SearchResultCompletion = (Result<MKLocalSearch.Response, Error>, CoordinateEditorView) -> Void
 	/**
 	Performs a search for map locations based on the user's text input using natural language. The response is provided without enacting any actions. If you wish for
 	the location to automatically be selected, you may just set the `selectedLocationAnnotation` to the result in the completion closure, or maybe you'd
@@ -169,7 +169,7 @@ public class CoordinateEditor: UIView {
 	}
 }
 
-extension CoordinateEditor {
+extension CoordinateEditorView {
 	public typealias AnnotationProvider = (MKMapView, EditorAnnotation) -> MKAnnotationView?
 	class TheDelegate: NSObject, MKMapViewDelegate {
 

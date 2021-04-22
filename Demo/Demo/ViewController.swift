@@ -13,7 +13,7 @@ import CoreLocation
 
 class ViewController: UIViewController {
 
-	let coordEditor = CoordinateEditor()
+	let coordEditor = CoordinateEditorView()
 
 	override func loadView() {
 		self.view = coordEditor
@@ -46,12 +46,12 @@ class ViewController: UIViewController {
 			search.isEmpty == false
 		else { return }
 
-		coordEditor.performNaturalLanguageSearch(for: search) { [weak self] result, editorView in
+		coordEditor.performNaturalLanguageSearch(for: search) { result, editorView in
 			do {
 				let response = try result.get()
 				guard let firstResult = response.mapItems.first?.placemark else { return }
 
-				editorView.selectedLocationAnnotation = CoordinateEditor.EditorAnnotation(firstResult, mode: .selectedCoordinate)
+				editorView.selectedLocationAnnotation = CoordinateEditorView.EditorAnnotation(firstResult, mode: .selectedCoordinate)
 				editorView.setRegion(response.boundingRegion)
 			} catch {
 				print("error searching: \(error)")
