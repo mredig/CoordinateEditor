@@ -46,13 +46,13 @@ class ViewController: UIViewController {
 			search.isEmpty == false
 		else { return }
 
-		coordEditor.performNaturalLanguageSearch(for: search) { [weak self] result in
+		coordEditor.performNaturalLanguageSearch(for: search) { [weak self] result, editorView in
 			do {
 				let response = try result.get()
 				guard let firstResult = response.mapItems.first?.placemark else { return }
 
-				self?.coordEditor.selectedCoordinates = CoordinateEditor.EditorAnnotation(firstResult, mode: .selectedCoordinate)
-				self?.coordEditor.setRegion(response.boundingRegion)
+				editorView.selectedLocationAnnotation = CoordinateEditor.EditorAnnotation(firstResult, mode: .selectedCoordinate)
+				editorView.setRegion(response.boundingRegion)
 			} catch {
 				print("error searching: \(error)")
 			}

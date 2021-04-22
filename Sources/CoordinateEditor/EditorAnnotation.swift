@@ -25,7 +25,7 @@ extension CoordinateEditor {
 			self.init(title: title, mode: mode, coordinate: placemark.coordinate)
 		}
 
-		public static func fetchName(for coordinate: CLLocationCoordinate2D, mode: CoordinateSelectionMode, completion: @escaping (Result<EditorAnnotation, Error>) -> Void) {
+		public static func fetchNameAndInit(for coordinate: CLLocationCoordinate2D, mode: CoordinateSelectionMode, completion: @escaping (Result<EditorAnnotation, Error>) -> Void) {
 			CLGeocoder().reverseGeocodeLocation(CLLocation(coordinate)) { placemarks, error in
 				let result: Result<EditorAnnotation, Error>
 				defer {

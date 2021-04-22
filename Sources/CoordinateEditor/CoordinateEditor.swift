@@ -2,6 +2,9 @@ import MapKit
 
 public class CoordinateEditor: UIView {
 	private var _startLocationAnnotation: EditorAnnotation?
+	/**
+	Set this value if you have coordinates to start with and a title to label on the map. If you only have coordinates, refer to `setStarter(_:)`
+	*/
 	public var startLocationAnnotation: EditorAnnotation? {
 		get { _startLocationAnnotation }
 		set {
@@ -11,6 +14,9 @@ public class CoordinateEditor: UIView {
 		}
 	}
 	private var _selectedLocationAnnotation: EditorAnnotation?
+	/**
+	This value reflects the location that the user has selected. You may also set it programmatically.
+	*/
 	public var selectedLocationAnnotation: EditorAnnotation? {
 		get { _selectedLocationAnnotation }
 		set {
@@ -20,6 +26,9 @@ public class CoordinateEditor: UIView {
 		}
 	}
 
+	/**
+	Forwarded property from the `MKMapView`
+	*/
 	public var region: MKCoordinateRegion {
 		get { mapView.region }
 		set { mapView.region = newValue }
@@ -33,6 +42,9 @@ public class CoordinateEditor: UIView {
 		case selectedCoordinate
 	}
 
+	/**
+	You may provide a new value to this closure to override the default pin appearances.
+	*/
 	public var annotationViewProvider: AnnotationProvider {
 		get { mapDelegate.provider }
 		set { mapDelegate.provider = newValue }
@@ -86,7 +98,7 @@ public class CoordinateEditor: UIView {
 
 		let coordinate = mapView.convert(deviceLocation, toCoordinateFrom: mapView)
 
-		EditorAnnotation.fetchName(for: coordinate, mode: .selectedCoordinate) { [weak self] result in
+		EditorAnnotation.fetchNameAndInit(for: coordinate, mode: .selectedCoordinate) { [weak self] result in
 			do {
 				let annotation = try result.get()
 				self?.selectedLocationAnnotation = annotation
@@ -96,16 +108,22 @@ public class CoordinateEditor: UIView {
 		}
 	}
 
-	public typealias SearchResultCompletion = (Result<MKLocalSearch.Response, Error>) -> Void
+	public typealias SearchResultCompletion = (Result<MKLocalSearch.Response, Error>, CoordinateEditor) -> Void
+	/**
+	Performs a search for map locations based on the user's text input using natural language. The response is provided without enacting any actions. If you wish for
+	the location to automatically be selected, you may just set the `selectedLocationAnnotation` to the result in the completion closure, or maybe you'd
+	prefer to just move the region to the boundary of the result. Perhaps you don't want to do anything and just print someting to the console. I don't care. I'm not
+	your mom. Do what you want. But the tools are there if you DO want to automate anything.
+	*/
 	public func performNaturalLanguageSearch(for query: String, completion: @escaping SearchResultCompletion) {
 		let request = MKLocalSearch.Request()
 		request.naturalLanguageQuery = query
 		let search = MKLocalSearch(request: request)
-		search.start { response, error in
+		search.start { [self] response, error in
 			let result: Result<MKLocalSearch.Response, Error>
 			defer {
 				DispatchQueue.main.async {
-					completion(result)
+					completion(result, self)
 				}
 			}
 
@@ -123,16 +141,25 @@ public class CoordinateEditor: UIView {
 		}
 	}
 
+	/**
+	Passthrough to the `MKMapView`'s `setRegion` method.
+	*/
 	public func setRegion(_ region: MKCoordinateRegion, animated: Bool = true) {
 		mapView.setRegion(region, animated: animated)
 	}
 
+	/**
+	Will perform a quick reverse geo lookup to find a natual language label for the provided coordinates and then set the labelled result to the `startLocationAnnotation`
+	*/
 	public func setStarter(to coordinate: CLLocationCoordinate2D) {
-		EditorAnnotation.fetchName(for: coordinate, mode: .startCoordinate) { [weak self] result in
+		EditorAnnotation.fetchNameAndInit(for: coordinate, mode: .startCoordinate) { [weak self] result in
 			self?.startLocationAnnotation = try? result.get()
 		}
 	}
 
+	/**
+	Passthrough to the `MKMapView`'s `register` method - allows you to provide custom `MKMapAnnotationView` subclasses
+	*/
 	public func register(_ viewClass: AnyClass, forAnnotationViewWithReuseIdentifier identifier: String) {
 		mapView.register(viewClass, forAnnotationViewWithReuseIdentifier: identifier)
 	}
