@@ -14,7 +14,7 @@ extension CoordinateEditorView {
 			self.coordinate = coordinate
 		}
 
-		convenience init(_ placemark: MKPlacemark, mode: CoordinateSelectionMode) {
+		public convenience init(_ placemark: MKPlacemark, mode: CoordinateSelectionMode) {
 			let locality = [placemark.locality, placemark.administrativeArea]
 				.compactMap { $0 }
 				.joined(separator: ", ")

@@ -9,8 +9,6 @@ import UIKit
 import CoordinateEditor
 import CoreLocation
 
-@testable import CoordinateEditor
-
 class ViewController: UIViewController {
 
 	let coordEditor = CoordinateEditorView()
