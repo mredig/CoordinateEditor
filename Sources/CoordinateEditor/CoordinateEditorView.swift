@@ -63,7 +63,13 @@ public class CoordinateEditorView: UIView {
 	private func commonInit() {
 		addSubview(mapView)
 
-		constrain(subview: mapView)
+		mapView.translatesAutoresizingMaskIntoConstraints = false
+		NSLayoutConstraint.activate([
+			mapView.leadingAnchor.constraint(equalTo: leadingAnchor),
+			mapView.trailingAnchor.constraint(equalTo: trailingAnchor),
+			mapView.bottomAnchor.constraint(equalTo: bottomAnchor),
+			mapView.topAnchor.constraint(equalTo: topAnchor),
+		])
 
 		let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(longPressMap))
 		mapView.addGestureRecognizer(longPressGesture)
