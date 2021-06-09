@@ -2,27 +2,19 @@ import MapKit
 
 extension CoordinateEditorView {
 	public class EditorAnnotation: NSObject, MKAnnotation {
-		public var title: String?
-		public var subtitle: String?
-		public let coordinate: CLLocationCoordinate2D
-		public var mode: CoordinateSelectionMode
-
-		public init(title: String? = nil, subtitle: String? = nil, mode: CoordinateSelectionMode, coordinate: CLLocationCoordinate2D) {
-			self.title = title
-			self.mode = mode
-			self.subtitle = subtitle
-			self.coordinate = coordinate
+		public var title: String? {
+			sourcePlacemark.title
 		}
+		public var subtitle: String?
+		public var coordinate: CLLocationCoordinate2D {
+			sourcePlacemark.coordinate
+		}
+		public var mode: CoordinateSelectionMode
+		public let sourcePlacemark: MKPlacemark
 
-		public convenience init(_ placemark: MKPlacemark, mode: CoordinateSelectionMode) {
-			let locality = [placemark.locality, placemark.administrativeArea]
-				.compactMap { $0 }
-				.joined(separator: ", ")
-			let title = [placemark.name, locality]
-				.compactMap { $0 }
-				.joined(separator: " ")
-
-			self.init(title: title, mode: mode, coordinate: placemark.coordinate)
+		public init(_ placemark: MKPlacemark, mode: CoordinateSelectionMode) {
+			self.mode = mode
+			self.sourcePlacemark = placemark
 		}
 
 		public static func fetchNameAndInit(for coordinate: CLLocationCoordinate2D, mode: CoordinateSelectionMode, completion: @escaping (Result<EditorAnnotation, Error>) -> Void) {
